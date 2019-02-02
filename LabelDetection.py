@@ -20,10 +20,17 @@ Usage:
     python quickstart.py
 """
 
+<<<<<<< HEAD
 import os
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"C:\Users\aorfi\Documents\GitHub\Lecture\Lecture-d91504d7a736.json"
 
 
+=======
+    # Explicitly use service account credentials by specifying the private key
+    # file.
+    storage_client = storage.Client.from_service_account_json(
+        '/Users/jatanbhatt/workspace/Lecture/Lecture-d91504d7a736.json')
+>>>>>>> 4fd0f1b9721bc8db75e21f40546e8cef18f55a3d
 
 
 def run_quickstart():
