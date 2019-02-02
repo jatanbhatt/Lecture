@@ -79,4 +79,4 @@ def speech_transcription(path):
     # [END video_speech_transcription_gcs]
 
 
-speech_transcription(r"C:\Users\aorfi\Downloads\video-1534733911")
+speech_transcription("gs://lecturetest/Voltage.mp4")
