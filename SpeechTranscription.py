@@ -14,47 +14,69 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This application demonstrates label detection on a demo video using
-the Google Cloud API.
-Usage:
-    python quickstart.py
+"""This application demonstrates label detection,
+explicit content, and shot change detection using the Google Cloud API.
+Usage Examples:
+    python analyze.py labels gs://cloud-ml-sandbox/video/chicago.mp4
+    python analyze.py labels_file resources/cat.mp4
+    python analyze.py shots gs://demomaker/gbikes_dinosaur.mp4
+    python analyze.py explicit_content gs://demomaker/gbikes_dinosaur.mp4
 """
 
+import argparse
+import io
 
-def run_quickstart():
-    # [START video_quickstart]
+from google.cloud import videointelligence
+from google.cloud.videointelligence import enums
+
+
+def speech_transcription(path):
+    # [START video_speech_transcription_gcs]
+    """Transcribe speech from a video stored on GCS."""
     from google.cloud import videointelligence
 
     video_client = videointelligence.VideoIntelligenceServiceClient()
-    features = [videointelligence.enums.Feature.LABEL_DETECTION]
+    features = [videointelligence.enums.Feature.SPEECH_TRANSCRIPTION]
+
+    config = videointelligence.types.SpeechTranscriptionConfig(
+        language_code='en-US',
+        enable_automatic_punctuation=True)
+    video_context = videointelligence.types.VideoContext(
+        speech_transcription_config=config)
+
     operation = video_client.annotate_video(
-        'gs://demomaker/cat.mp4', features=features)
-    print('\nProcessing video for label annotations:')
+        path, features=features,
+        video_context=video_context)
 
-    result = operation.result(timeout=120)
-    print('\nFinished processing.')
+    print('\nProcessing video for speech transcription.')
 
-    # first result is retrieved because a single video was processed
-    segment_labels = result.annotation_results[0].segment_label_annotations
-    for i, segment_label in enumerate(segment_labels):
-        print('Video label description: {}'.format(
-            segment_label.entity.description))
-        for category_entity in segment_label.category_entities:
-            print('\tLabel category description: {}'.format(
-                category_entity.description))
+    result = operation.result(timeout=600)
 
-        for i, segment in enumerate(segment_label.segments):
-            start_time = (segment.segment.start_time_offset.seconds +
-                          segment.segment.start_time_offset.nanos / 1e9)
-            end_time = (segment.segment.end_time_offset.seconds +
-                        segment.segment.end_time_offset.nanos / 1e9)
-            positions = '{}s to {}s'.format(start_time, end_time)
-            confidence = segment.confidence
-            print('\tSegment {}: {}'.format(i, positions))
-            print('\tConfidence: {}'.format(confidence))
-        print('\n')
-    # [END video_quickstart]
+    # There is only one annotation_result since only
+    # one video is processed.
+    annotation_results = result.annotation_results[0]
+    for speech_transcription in annotation_results.speech_transcriptions:
+
+        # The number of alternatives for each transcription is limited by
+        # SpeechTranscriptionConfig.max_alternatives.
+        # Each alternative is a different possible transcription
+        # and has its own confidence score.
+        for alternative in speech_transcription.alternatives:
+            print('Alternative level information:')
+
+            print('Transcript: {}'.format(alternative.transcript))
+            print('Confidence: {}\n'.format(alternative.confidence))
+
+            print('Word level information:')
+            for word_info in alternative.words:
+                word = word_info.word
+                start_time = word_info.start_time
+                end_time = word_info.end_time
+                print('\t{}s - {}s: {}'.format(
+                    start_time.seconds + start_time.nanos * 1e-9,
+                    end_time.seconds + end_time.nanos * 1e-9,
+                    word))
+    # [END video_speech_transcription_gcs]
 
 
-if __name__ == '__main__':
-    run_quickstart()
+speech_transcription(r"C:\Users\aorfi\Downloads\video-1534733911")
