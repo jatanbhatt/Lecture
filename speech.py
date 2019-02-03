@@ -25,9 +25,17 @@ Usage Examples:
 
 import argparse
 import io
+import json
 
 from google.cloud import videointelligence
 from google.cloud.videointelligence import enums
+
+dict = {}
+
+def writeToJSONFile(path, fileName, data):
+    filePathNameWExt = './' + path + '/' + fileName + '.json'
+    with open(filePathNameWExt, 'w') as fp:
+        json.dump(data, fp)
 
 def speech_transcription(path):
     # [START video_speech_transcription_gcs]
@@ -71,10 +79,11 @@ def speech_transcription(path):
                 word = word_info.word
                 start_time = word_info.start_time
                 end_time = word_info.end_time
-                print('\t{}s - {}s: {}'.format(
-                    start_time.seconds + start_time.nanos * 1e-9,
-                    end_time.seconds + end_time.nanos * 1e-9,
-                    word))
+                dict[word] = start_time.seconds #+  start_time.nanos * 1e-9
+                #print('\t{}s - {}s: {}'.format(
+                #    start_time.seconds + start_time.nanos * 1e-9,
+                #    end_time.seconds + end_time.nanos * 1e-9,
+                #    word))
     # [END video_speech_transcription_gcs]
 
 
@@ -99,3 +108,9 @@ if __name__ == '__main__':
         analyze_explicit_content(args.path)
     if args.command == 'transcribe':
         speech_transcription(args.path)
+
+path = './'
+filename = 'output'
+
+
+writeToJSONFile(path,filename,dict)
